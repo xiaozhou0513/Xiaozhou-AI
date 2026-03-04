@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="小粥AI写作 - 基于智谱GLM-4的专业AI写作助手">
+    <title>小粥AI写作 · 您的智能创作伙伴</title>
+    
+    <!-- Preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥣</text></svg>">
+</head>
+<body data-theme="dark">
+    <!-- 加载动画 -->
+    <div class="page-loader" id="pageLoader">
+        <div class="loader-content">
+            <div class="loader-logo">
+                <span style="font-size: 3rem;">🥣</span>
+            </div>
+            <div class="loader-text">小粥AI写作</div>
+            <div class="loader-bar">
+                <div class="loader-progress"></div>
+            </div>
+            <div class="loader-subtitle">正在准备您的创作空间...</div>
+        </div>
+    </div>
+
+    <!-- 粒子背景 -->
+    <canvas id="particleCanvas" class="particle-bg"></canvas>
+    
+    <!-- 环境光效 -->
+    <div class="ambient-light light-1"></div>
+    <div class="ambient-light light-2"></div>
+    <div class="ambient-light light-3"></div>
+
+    <!-- 顶部导航 -->
+    <nav class="glass-nav" id="navbar">
+        <div class="nav-left">
+            <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">
+                <i class="ri-menu-4-line"></i>
+            </button>
+            
+            <a href="#" class="nav-brand">
+                <div class="logo-glow">
+                    <span style="font-size: 1.5rem;">🥣</span>
+                </div>
+                <div class="brand-text">
+                    <span class="brand-name">小粥AI写作</span>
+                    <span class="brand-tagline">温暖您的创作时光</span>
+                </div>
+            </a>
+        </div>
+        
+        <div class="nav-center">
+            <div class="connection-status" id="connectionStatus">
+                <span class="status-dot offline"></span>
+                <span class="status-text">未连接</span>
+            </div>
+        </div>
+
+        <div class="nav-right">
+            <div class="nav-stats">
+                <div class="stat-item" title="今日生成次数">
+                    <i class="ri-fire-line"></i>
+                    <span id="todayCount">0</span>
+                </div>
+                <div class="stat-item" title="剩余额度">
+                    <i class="ri-coins-line"></i>
+                    <span id="creditBalance">--</span>
+                </div>
+            </div>
+            
+            <div class="nav-divider"></div>
+            
+            <button class="icon-btn tooltip" data-tooltip="主题切换" onclick="toggleTheme()">
+                <i class="ri-sun-line" id="themeIcon"></i>
+            </button>
+            
+            <button class="icon-btn tooltip" data-tooltip="快捷键" onclick="showShortcuts()">
+                <i class="ri-keyboard-box-line"></i>
+            </button>
+            
+            <button class="icon-btn tooltip" data-tooltip="设置" onclick="showSettings()">
+                <i class="ri-settings-3-line"></i>
+            </button>
+            
+            <div class="user-menu" id="userMenu">
+                <button class="user-btn" onclick="toggleUserMenu()">
+                    <div class="user-avatar">
+                        <span id="userInitial">粥</span>
+                    </div>
+                    <i class="ri-arrow-down-s-line"></i>
+                </button>
+                <div class="dropdown-menu" id="userDropdown">
+                    <div class="dropdown-header">
+                        <span class="user-name" id="userName">访客</span>
+                        <span class="user-email" id="userEmail">欢迎品尝小粥</span>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" onclick="showApiModal()">
+                        <i class="ri-key-line"></i>
+                        API配置
+                    </a>
+                    <a href="#" onclick="showUsageStats()">
+                        <i class="ri-bar-chart-box-line"></i>
+                        使用统计
+                    </a>
+                    <a href="#" onclick="exportData()">
+                        <i class="ri-download-cloud-2-line"></i>
+                        导出数据
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" onclick="showAbout()">
+                        <i class="ri-information-line"></i>
+                        关于小粥
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主布局 -->
+    <main class="app-container">
+        <!-- 左侧边栏 -->
+        <aside class="sidebar glass-panel" id="sidebar">
+            <div class="sidebar-content">
+                <!-- 创作模式 -->
+                <div class="sidebar-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="ri-apps-line"></i>
+                            创作模式
+                        </h3>
+                        <span class="section-badge">6</span>
+                    </div>
+                    
+                    <div class="mode-list">
+                        <button class="mode-card active" data-type="article" onclick="selectType('article')">
+                            <div class="mode-icon gradient-blue">
+                                <i class="ri-article-line"></i>
+                            </div>
+                            <div class="mode-info">
+                                <span class="mode-name">深度长文</span>
+                                <span class="mode-desc">专业文章与深度报告</span>
+                            </div>
+                            <div class="mode-check">
+                                <i class="ri-check-line"></i>
+                            </div>
+                        </button>
+
+                        <button class="mode-card" data-type="marketing" onclick="selectType('marketing')">
+                            <div class="mode-icon gradient-pink">
+                                <i class="ri-megaphone-line"></i>
+                            </div>
+                            <div class="mode-info">
+                                <span class="mode-name">营销文案</span>
+                                <span class="mode-desc">高转化广告与卖点</span>
+                            </div>
+                        </button>
+
+                        <button class="mode-card" data-type="social" onclick="selectType('social')">
+                            <div class="mode-icon gradient-purple">
+                                <i class="ri-smartphone-line"></i>
+                            </div>
+                            <div class="mode-info">
+                                <span class="mode-name">社交媒体</span>
+                                <span class="mode-desc">爆款内容与互动</span>
+                            </div>
+                        </button>
+
+                        <button class="mode-card" data-type="work" onclick="selectType('work')">
+                            <div class="mode-icon gradient-orange">
+                                <i class="ri-briefcase-line"></i>
+                            </div>
+                            <div class="mode-info">
+                                <span class="mode-name">职场办公</span>
+                                <span class="mode-desc">邮件报告与总结</span>
+                            </div>
+                        </button>
+
+                        <button class="mode-card" data-type="creative" onclick="selectType('creative')">
+                            <div class="mode-icon gradient-green">
+                                <i class="ri-quill-pen-line"></i>
+                            </div>
+                            <div class="mode-info">
+                                <span class="mode-name">创意写作</span>
+                                <span class="mode-desc">小说故事与剧本</span>
+                            </div>
+                        </button>
+
+                        <button class="mode-card" data-type="academic" onclick="selectType('academic')">
+                            <div class="mode-icon gradient-cyan">
+                                <i class="ri-graduation-cap-line"></i>
+                            </div>
+                            <div class="mode-info">
+                                <span class="mode-name">学术教育</span>
+                                <span class="mode-desc">论文教案与研究</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 快速模板 -->
+                <div class="sidebar-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="ri-layout-masonry-line"></i>
+                            快速模板
+                        </h3>
+                    </div>
+                    <div class="template-list" id="templateList">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
+
+                <!-- 参数设置 -->
+                <div class="sidebar-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="ri-equalizer-line"></i>
+                            生成参数
+                        </h3>
+                    </div>
+                    
+                    <div class="param-group">
+                        <label class="param-label">
+                            <span>输出长度</span>
+                            <span class="param-value" id="lengthValue">简洁</span>
+                        </label>
+                        <div class="segment-control">
+                            <button class="segment active" data-value="short" onclick="setLength('short')">
+                                简洁
+                            </button>
+                            <button class="segment" data-value="medium" onclick="setLength('medium')">
+                                标准
+                            </button>
+                            <button class="segment" data-value="long" onclick="setLength('long')">
+                                详细
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="param-group">
+                        <label class="param-label">
+                            <span>创意温度</span>
+                            <span class="param-value" id="tempValue">0.7</span>
+                        </label>
+                        <div class="slider-wrapper">
+                            <input type="range" class="neon-slider" min="0" max="100" value="70" id="tempSlider">
+                            <div class="slider-track"></div>
+                        </div>
+                        <div class="slider-labels">
+                            <span>精确</span>
+                            <span>平衡</span>
+                            <span>创意</span>
+                        </div>
+                    </div>
+
+                    <div class="param-group">
+                        <label class="param-label">语言风格</label>
+                        <div class="style-grid">
+                            <button class="style-chip active" onclick="selectStyle(this, 'professional')">
+                                <i class="ri-suitcase-line"></i>
+                                <span>专业</span>
+                            </button>
+                            <button class="style-chip" onclick="selectStyle(this, 'casual')">
+                                <i class="ri-cup-line"></i>
+                                <span>轻松</span>
+                            </button>
+                            <button class="style-chip" onclick="selectStyle(this, 'humorous')">
+                                <i class="ri-emotion-laugh-line"></i>
+                                <span>幽默</span>
+                            </button>
+                            <button class="style-chip" onclick="selectStyle(this, 'poetic')">
+                                <i class="ri-moon-clear-line"></i>
+                                <span>文艺</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="param-group">
+                        <label class="param-toggle">
+                            <input type="checkbox" id="streamOutput" checked>
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-label">
+                                <i class="ri-flashlight-line"></i>
+                                流式输出
+                            </span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 用量卡片 -->
+            <div class="usage-card">
+                <div class="usage-header">
+                    <div class="usage-icon">
+                        <i class="ri-battery-charge-line"></i>
+                    </div>
+                    <div class="usage-info">
+                        <span class="usage-label">本月用量</span>
+                        <span class="usage-percent" id="usagePercent">0%</span>
+                    </div>
+                </div>
+                <div class="usage-progress">
+                    <div class="usage-bar">
+                        <div class="usage-fill" id="usageFill" style="width: 0%"></div>
+                        <div class="usage-glow"></div>
+                    </div>
+                </div>
+                <div class="usage-footer">
+                    <span id="usageText">0 / 10,000 Tokens</span>
+                    <button class="usage-upgrade" onclick="showPricing()">升级</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 中央工作区 -->
+        <section class="workspace">
+            <!-- 输入区域 -->
+            <div class="input-panel glass-panel" id="inputPanel">
+                <div class="panel-tabs">
+                    <button class="tab active" onclick="switchTab('write')">
+                        <i class="ri-edit-line"></i>
+                        创作
+                    </button>
+                    <button class="tab" onclick="switchTab('templates')">
+                        <i class="ri-stack-line"></i>
+                        模板库
+                    </button>
+                    <button class="tab" onclick="switchTab('history')">
+                        <i class="ri-history-line"></i>
+                        历史
+                        <span class="tab-badge" id="historyBadge">0</span>
+                    </button>
+                </div>
+
+                <div class="tab-content active" id="writeTab">
+                    <div class="input-toolbar">
+                        <div class="toolbar-left">
+                            <button class="tool-btn" onclick="insertTemplate('outline')" title="插入大纲">
+                                <i class="ri-list-check-2"></i>
+                            </button>
+                            <button class="tool-btn" onclick="insertTemplate('table')" title="插入表格">
+                                <i class="ri-table-2"></i>
+                            </button>
+                            <div class="toolbar-divider"></div>
+                            <button class="tool-btn" onclick="clearInput()" title="清空">
+                                <i class="ri-delete-bin-line"></i>
+                            </button>
+                        </div>
+                        <div class="toolbar-right">
+                            <span class="char-count">
+                                <i class="ri-character-recognition-line"></i>
+                                <span id="charCount">0</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="textarea-container">
+                        <textarea 
+                            id="promptInput" 
+                            class="neon-textarea" 
+                            placeholder="描述您的创作需求，例如：&#10;帮我写一篇关于人工智能在医疗诊断中应用的深度文章，面向医疗行业从业者，需要包含2024年最新案例、技术原理分析和未来趋势预测..."
+                            rows="8"
+                        ></textarea>
+                        <div class="textarea-focus-border"></div>
+                        
+                        <div class="input-presets">
+                            <span class="presets-label">快速添加：</span>
+                            <div class="presets-list">
+                                <button class="preset-chip" onclick="addPreset('包含最新数据')">
+                                    <i class="ri-bar-chart-grouped-fill"></i>
+                                    数据支撑
+                                </button>
+                                <button class="preset-chip" onclick="addPreset('分点论述')">
+                                    <i class="ri-list-ordered-2"></i>
+                                    分点论述
+                                </button>
+                                <button class="preset-chip" onclick="addPreset('举例说明')">
+                                    <i class="ri-lightbulb-flash-line"></i>
+                                    案例
+                                </button>
+                                <button class="preset-chip" onclick="addPreset('对比分析')">
+                                    <i class="ri-scales-3-line"></i>
+                                    对比
+                                </button>
+                                <button class="preset-chip" onclick="addPreset('总结建议')">
+                                    <i class="ri-check-double-line"></i>
+                                    总结
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="generate-btn" id="generateBtn" onclick="generateContent()">
+                        <div class="btn-content">
+                            <div class="btn-icon">
+                                <i class="ri-sparkling-line"></i>
+                            </div>
+                            <div class="btn-text">
+                                <span class="btn-title">开始智能创作</span>
+                                <span class="btn-subtitle">Ctrl + Enter 快捷生成</span>
+                            </div>
+                        </div>
+                        <div class="btn-loading">
+                            <div class="loading-ring"></div>
+                            <span>小粥思考中</span>
+                            <div class="loading-dots">
+                                <span></span><span></span><span></span>
+                            </div>
+                        </div>
+                        <div class="btn-shine"></div>
+                    </button>
+                </div>
+
+                <div class="tab-content" id="templatesTab">
+                    <div class="templates-grid" id="templatesGrid">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
+
+                <div class="tab-content" id="historyTab">
+                    <div class="history-header">
+                        <div class="history-filters">
+                            <button class="filter-btn active" data-filter="all">全部</button>
+                            <button class="filter-btn" data-filter="article">文章</button>
+                            <button class="filter-btn" data-filter="marketing">营销</button>
+                            <button class="filter-btn" data-filter="social">社交</button>
+                        </div>
+                        <button class="clear-history" onclick="clearAllHistory()">
+                            <i class="ri-delete-bin-line"></i>
+                            清空历史
+                        </button>
+                    </div>
+                    <div class="history-list" id="historyList">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 输出区域 -->
+            <div class="output-panel glass-panel" id="outputPanel" style="display: none;">
+                <div class="output-header">
+                    <div class="output-info">
+                        <div class="output-type-badge" id="outputTypeBadge">
+                            <i class="ri-article-line"></i>
+                            <span>深度长文</span>
+                        </div>
+                        <div class="output-meta">
+                            <span id="outputWordCount">0 字</span>
+                            <span class="dot-separator">·</span>
+                            <span id="outputTime">刚刚</span>
+                            <span class="dot-separator">·</span>
+                            <span id="outputModel">GLM-4</span>
+                        </div>
+                    </div>
+                    
+                    <div class="output-actions">
+                        <button class="action-btn-primary" onclick="copyContent()">
+                            <i class="ri-file-copy-line"></i>
+                            <span>复制</span>
+                        </button>
+                        <button class="action-btn-secondary" onclick="downloadContent()">
+                            <i class="ri-download-2-line"></i>
+                            <span>下载</span>
+                        </button>
+                        <button class="action-btn-secondary" onclick="regenerate()">
+                            <i class="ri-refresh-line"></i>
+                            <span>重写</span>
+                        </button>
+                        <div class="action-divider"></div>
+                        <button class="action-btn-icon" onclick="closeOutput()" title="关闭">
+                            <i class="ri-close-line"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="output-content-wrapper">
+                    <div class="output-content" id="outputContent"></div>
+                    
+                    <!-- 骨架屏 -->
+                    <div class="skeleton-loader" id="skeletonLoader" style="display: none;">
+                        <div class="skeleton-line" style="width: 100%"></div>
+                        <div class="skeleton-line" style="width: 90%"></div>
+                        <div class="skeleton-line" style="width: 95%"></div>
+                        <div class="skeleton-line" style="width: 40%"></div>
+                        <div class="skeleton-gap"></div>
+                        <div class="skeleton-line" style="width: 100%"></div>
+                        <div class="skeleton-line" style="width: 85%"></div>
+                        <div class="skeleton-line" style="width: 60%"></div>
+                    </div>
+                </div>
+
+                <div class="output-footer">
+                    <div class="continue-box">
+                        <div class="continue-input-wrapper">
+                            <i class="ri-chat-forward-line"></i>
+                            <input 
+                                type="text" 
+                                id="continueInput" 
+                                class="continue-input" 
+                                placeholder="输入修改意见，例如：'增加更多数据支撑' 或 '缩短到500字'..."
+                            >
+                            <button class="continue-send" onclick="continueWriting()">
+                                <i class="ri-send-plane-fill"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 空状态提示 -->
+            <div class="empty-state" id="emptyState">
+                <div class="empty-illustration">
+                    <div class="empty-icon">
+                        <span style="font-size: 4rem;">🥣</span>
+                    </div>
+                    <div class="empty-glow"></div>
+                </div>
+                <h3>小粥已准备好，开始您的创作之旅</h3>
+                <p>在上方输入创作需求，或选择一个模板快速开始</p>
+                <div class="empty-features">
+                    <div class="feature-item">
+                        <i class="ri-flash-line"></i>
+                        <span>秒级生成</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="ri-brain-line"></i>
+                        <span>智能续写</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="ri-shield-check-line"></i>
+                        <span>原创保障</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 右侧信息栏 -->
+        <aside class="info-sidebar glass-panel" id="infoSidebar">
+            <div class="info-section">
+                <h4 class="info-title">
+                    <i class="ri-lightbulb-flash-line"></i>
+                    创作提示
+                </h4>
+                <div class="tip-cards">
+                    <div class="tip-card">
+                        <div class="tip-icon">🎯</div>
+                        <div class="tip-content">
+                            <h5>明确目标受众</h5>
+                            <p>告诉小粥您的读者是谁，专业人士还是普通大众</p>
+                        </div>
+                    </div>
+                    <div class="tip-card">
+                        <div class="tip-icon">📊</div>
+                        <div class="tip-content">
+                            <h5>提供具体数据</h5>
+                            <p>包含关键数字、时间范围或特定要求</p>
+                        </div>
+                    </div>
+                    <div class="tip-card">
+                        <div class="tip-icon">🎨</div>
+                        <div class="tip-content">
+                            <h5>指定风格语气</h5>
+                            <p>让小粥用专业、轻松或幽默等不同风格创作</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h4 class="info-title">
+                    <i class="ri-time-line"></i>
+                    最近生成
+                </h4>
+                <div class="recent-list" id="recentList">
+                    <div class="empty-mini">
+                        <i class="ri-inbox-line"></i>
+                        <span>暂无记录</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h4 class="info-title">
+                    <i class="ri-keyboard-box-line"></i>
+                    快捷键
+                </h4>
+                <div class="shortcuts-list">
+                    <div class="shortcut-item">
+                        <kbd>Ctrl</kbd> + <kbd>Enter</kbd>
+                        <span>生成内容</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Ctrl</kbd> + <kbd>/</kbd>
+                        <span>清空输入</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Ctrl</kbd> + <kbd>S</kbd>
+                        <span>保存到历史</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Esc</kbd>
+                        <span>关闭弹窗</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <!-- 全局弹窗 -->
+    <div class="modal-overlay" id="globalModal">
+        <div class="modal-container" id="modalContainer">
+            <!-- 动态内容 -->
+        </div>
+    </div>
+
+    <!-- Toast容器 -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- 回到顶部 -->
+    <button class="back-to-top" id="backToTop" onclick="scrollToTop()">
+        <i class="ri-arrow-up-line"></i>
+    </button>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
